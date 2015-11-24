@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <cmath>
 
 using namespace std;
 
@@ -9,8 +10,12 @@ struct colloid{
     double x,y;
 };
 
-void init(colloid* const c, const int N);
-void print(const colloid* const c, const int N, const string fname);
+void init(colloid* const c, const int N);//changes contents of arrays
+void print(const colloid* const c, const int N, const string fname);//only prints, see "out", that is why const colloid*
+
+void conditions(int* rx, int* ry, const int N);
+void pusher(colloid* const c, int* rx, int* ry, const int N);//? const ?
+void statistics(const colloid* const c, double& meanx, double& meany, double& var, const int N);
 
 int main(void){
   
@@ -45,9 +50,13 @@ int main(void){
     for(int i = 1; i <= Nfiles; i++){
 	for(int j = 0; j < Nsubsteps; j++){
 	    // call to function which randomly sets up rx and ry
+	    conditions(rx, ry, N);
 	    // call to function which pushes all colloids according to rx and ry
+	    pusher(c, rx, ry, N);
 	    // call to function which evaluates statistics
-	    stat << (i-1)*Nsubsteps+j << "\t" << meanx << "\t";
+	    statistics(c, meanx, meany, var, N);
+	    
+	    stat << (i-1)*Nsubsteps+j << "\t" << meanx << "\t";//"stat" is just a name and comes from ofstream stat(), see above! 
 	    stat << meany << "\t" << var << endl;
 	}
 	s.str("");						// preparations for printing...
@@ -74,4 +83,32 @@ void print(const colloid* const c, const int N, const string fname){
     for(int i = 0; i < N; i++)
 	out << c[i].x << "\t" << c[i].y << endl;
     out.close();
+}
+
+void conditions(int* rx, int* ry, const int N){
+  for(int i=0; i<N; i++){
+    rx[i] = rand()%3-1;
+    ry[i] = rand()%3-1;
+  }
+}
+
+void pusher(colloid* const c, int* rx, int* ry, const int N){
+  for(int i=0; i<N; i++){
+    c[i].x += rx[i]; 
+    c[i].y += ry[i];
+  }
+  //position wurde fur jedes(!) Teilchen nur einmal(!) veraendert, d.h. nach dem for-loop sind wir nur ein(!) Zeitschritt gegangen.
+}
+
+void statistics(const colloid* const c, double& meanx, double& meany, double& var, const int N){
+  for(int i=0; i<N; i++){
+    meanx+=c[i].x;
+    meany+=c[i].y;
+  }
+  meanx/=N;
+  meany/=N;
+  
+  for(int i=0; i<N; i++)
+    var+=(pow(c[i].x-meanx, 2)+pow(c[i].y-meany, 2));
+  var/=N;
 }
